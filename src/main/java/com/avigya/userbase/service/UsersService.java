@@ -2,11 +2,14 @@ package com.avigya.userbase.service;
 
 import com.avigya.userbase.model.Users;
 import com.avigya.userbase.records.RegisteredUser;
+import com.avigya.userbase.records.UserVerify;
 import com.avigya.userbase.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -17,6 +20,7 @@ import java.util.UUID;
 @Slf4j
 public class UsersService {
 
+    private final RestTemplate template;
     private final UsersRepository repository;
     public UUID createUser(RegisteredUser userRecord) {
 
@@ -53,6 +57,7 @@ public class UsersService {
             user.get().setFlatName(userRecord.getFlatName());
             user.get().setFlatNo(userRecord.getFlatNo());
             repository.save(user.get());
+            verifyUser(new UserVerify(user.get().getUserId(), "User +"+user.get().getFirstName()+" saved"));
             return "Data Saved Succesfully";
         }
         else
@@ -61,5 +66,11 @@ public class UsersService {
         }
 
 
+    }
+
+    private void verifyUser(UserVerify userVerify) {
+
+        String response=template.postForObject("https://registrationservice-production-0d3e.up.railway.app/verifyUser",new HttpEntity<>(userVerify),String.class);
+        log.info(response);
     }
 }
